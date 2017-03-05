@@ -6,9 +6,11 @@ from .visual_objects import Ray
 def reset_ray(ray, theta, center_xpos, center_ypos, radius, max_ray_length):
 
     ray.angle = theta
-    ray.init_relative_end_x = radius * math.sin(ray.angle) + max_ray_length * math.sin(ray.angle)
+    ray.init_relative_end_x = radius * math.sin(ray.angle) \
+                            + max_ray_length * math.sin(ray.angle)
     ray.x2 = center_xpos + ray.init_relative_end_x
-    ray.init_relative_end_y = radius * math.cos(ray.angle) + max_ray_length * math.cos(ray.angle)
+    ray.init_relative_end_y = radius * math.cos(ray.angle) \
+                            + max_ray_length * math.cos(ray.angle)
     ray.y2 = center_ypos - ray.init_relative_end_y
     ray.x1 = center_xpos + radius * math.sin(ray.angle)
     ray.y1 = center_ypos - radius * math.cos(ray.angle)
@@ -49,8 +51,10 @@ class SensorAgent:
 
     def reset(self):
 
-        for i, theta in enumerate(np.linspace(-self.visual_angle/2.0, self.visual_angle/2.0, self.num_of_rays)):
-            reset_ray(self.rays[i], theta, self.xpos, self.ypos, self.radius, self.max_ray_length)
+        for i, theta in enumerate(np.linspace(-self.visual_angle/2.0, 
+                                    self.visual_angle/2.0, self.num_of_rays)):
+            reset_ray(self.rays[i], theta, self.xpos, self.ypos, 
+                    self.radius, self.max_ray_length)
 
     def set_position_x(self, x):
 
@@ -106,7 +110,8 @@ class SensorAgent:
 
         # Update the visual sensors
         for i, ray in enumerate(self.rays):
-            self.nervous_system.set_sensor(i, (self.max_ray_length - ray.Length) / self.max_ray_length)
+            self.nervous_system.set_sensor(i, 
+                (self.max_ray_length - ray.Length) / self.max_ray_length)
 
     def step(self, step_size, locked):
 
@@ -118,8 +123,10 @@ class SensorAgent:
             left_force = 0.0
             right_force = 0.0
         else:
-            left_force = self.nervous_system.neuron_output(self.nervous_system.circuit_size-1)
-            right_force = self.nervous_system.neuron_output(self.nervous_system.circuit_size)
+            left_force = self.nervous_system.neuron_output(\
+                                        self.nervous_system.circuit_size-1)
+            right_force = self.nervous_system.neuron_output(\
+                                        self.nervous_system.circuit_size)
 
         # Update the agent's position
         self.velocity_x = (left_force - right_force) / self.mass

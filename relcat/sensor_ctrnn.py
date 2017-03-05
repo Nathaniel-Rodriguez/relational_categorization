@@ -28,17 +28,22 @@ class SensorCTRNN:
         self.taus = np.zeros(self.circuit_size)
         self.rtaus = np.zeros(self.circuit_size)
         self.sensor_states = np.zeros(self.circuit_size)
-        self.circuit_weights = np.zeros((self.circuit_size, self.circuit_size))
-        self.sensor_weights = np.zeros((self.circuit_size, self.circuit_size))
+        self.circuit_weights = np.zeros((self.circuit_size, \
+                                        self.circuit_size))
+        self.sensor_weights = np.zeros((self.circuit_size, \
+                                        self.circuit_size))
 
-    def randomize_state(self, random_variable_lower_bound=-1.0, random_variable_upper_bound=1.0):
+    def randomize_state(self, random_variable_lower_bound=-1.0, \
+            random_variable_upper_bound=1.0):
         """
-        Randomizes the state of the network given a set of lower and upper bounds that
-        the neuron states can take.
+        Randomizes the state of the network given a set of lower and upper 
+        bounds that the neuron states can take.
         """
 
-        self.ctrnn_states = np.random.uniform(random_variable_lower_bound, random_variable_upper_bound, size=self.circuit_size)
-        self.ctrnn_outputs = sigmoid(self.gains * self.ctrnn_states + self.biases)
+        self.ctrnn_states = np.random.uniform(random_variable_lower_bound, 
+                        random_variable_upper_bound, size=self.circuit_size)
+        self.ctrnn_outputs = \
+                    sigmoid(self.gains * self.ctrnn_states + self.biases)
         self.sensor_states = np.zeros(self.circuit_size)
 
     def set_neuron_time_constants(self, time_constants):

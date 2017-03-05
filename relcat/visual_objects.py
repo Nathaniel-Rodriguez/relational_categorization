@@ -33,10 +33,14 @@ class VisualObject:
 
     def clip_position(self, left, right, top, bottom):
 
-        self.center_xpos =  (left + self.size) if ((self.center_xpos - self.size) < left) else \
-            (right - self.size if (self.center_xpos + self.size) > right else self.center_xpos)
-        self.center_ypos = (top + self.size) if ((self.center_ypos - self.size) < top) else \
-            ((bottom - self.size) if (self.center_ypos + self.size) > bottom else self.center_ypos)
+        self.center_xpos =  (left + self.size) if \
+            ((self.center_xpos - self.size) < left) else \
+            (right - self.size if (self.center_xpos + self.size) > right \
+                else self.center_xpos)
+        self.center_ypos = (top + self.size) if \
+            ((self.center_ypos - self.size) < top) else \
+            ((bottom - self.size) if \
+                (self.center_ypos + self.size) > bottom else self.center_ypos)
 
     def leading_edge(self):
 
@@ -61,18 +65,25 @@ class Circle(VisualObject):
 
         dx = ray.x2 - ray.x1
         dy = ray.y2 - ray.y1
-        u = ((self.center_xpos - ray.x1) * dx + (self.center_ypos - ray.y1) * dy) / (dx * dx + dy * dy)
+        u = ((self.center_xpos - ray.x1) * dx \
+            + (self.center_ypos - ray.y1) * dy) / (dx * dx + dy * dy)
         nearX = ray.x1 + u * dx
         nearY = ray.y1 + u * dy
-        if (math.sqrt((self.center_xpos - nearX) * (self.center_xpos - nearX) + \
-            (self.center_ypos - nearY) * (self.center_ypos - nearY)) > self.size):
+        if (math.sqrt((self.center_xpos - nearX) \
+            * (self.center_xpos - nearX) \
+            + (self.center_ypos - nearY) \
+            * (self.center_ypos - nearY)) > self.size):
+
             return None
 
         a = dx * dx + dy * dy
-        b = 2 * (dx * (ray.x1 - self.center_xpos) + dy * (ray.y1 - self.center_ypos))
-        c = self.center_xpos * self.center_xpos + self.center_ypos * self.center_ypos \
+        b = 2 * (dx * (ray.x1 - self.center_xpos) \
+            + dy * (ray.y1 - self.center_ypos))
+        c = self.center_xpos * self.center_xpos \
+            + self.center_ypos * self.center_ypos \
             + ray.x1 * ray.x1 + ray.y1 * ray.y1 - 2 * \
-            (self.center_xpos * ray.x1 + self.center_ypos * ray.y1) - self.size * self.size
+            (self.center_xpos * ray.x1 + self.center_ypos * ray.y1) \
+            - self.size * self.size
         i = b * b - 4 * a * c
 
         if (i == 0):
@@ -87,12 +98,16 @@ class Circle(VisualObject):
             if (u >= 0 and u <= 1):
                 ray.x2 = ray.x1 + u * dx
                 ray.y2 = ray.y1 + u * dy
-                distance1 = math.sqrt((ray.x2 - ray.x1) * (ray.x2 - ray.x1) + (ray.y2 - ray.y1) * (ray.y2 - ray.y1))
+                distance1 = math.sqrt((ray.x2 - ray.x1) \
+                            * (ray.x2 - ray.x1) + (ray.y2 - ray.y1) \
+                            * (ray.y2 - ray.y1))
 
             if (u >= 0 and u <= 1):
                 end_x2 = ray.x1 + u * dx
                 end_y2 = ray.y1 + u * dy
-                distance2 = math.sqrt((end_x2 - ray.x1) * (end_x2 - ray.x1) + (end_y2 - ray.y1) * (end_y2 - ray.y1))
+                distance2 = math.sqrt((end_x2 - ray.x1) \
+                            * (end_x2 - ray.x1) + (end_y2 - ray.y1) \
+                            * (end_y2 - ray.y1))
 
                 if (distance2 < distance1):
                     ray.x2 = end_x2
@@ -114,24 +129,30 @@ class Diamond(VisualObject):
 
         x3 = self.center_xpos - self.size
         y4 = self.center_ypos + self.size
-        denom = (y4 - self.center_ypos) * (ray.x2 - ray.x1) - (self.center_xpos - x3) * (ray.y2 - ray.y1)
+        denom = (y4 - self.center_ypos) * (ray.x2 - ray.x1) \
+                - (self.center_xpos - x3) * (ray.y2 - ray.y1)
    
         if (denom != 0):
-            ua = ((self.center_xpos - x3) * (ray.y1 - self.center_ypos) - (y4 - self.center_ypos) * (ray.x1 - x3)) / denom
-            ub = ((ray.x2 - ray.x1) * (ray.y1 - self.center_ypos) - (ray.y2 - ray.y1) * (ray.x1 - x3)) / denom
+            ua = ((self.center_xpos - x3) * (ray.y1 - self.center_ypos) \
+                - (y4 - self.center_ypos) * (ray.x1 - x3)) / denom
+            ub = ((ray.x2 - ray.x1) * (ray.y1 - self.center_ypos) \
+                - (ray.y2 - ray.y1) * (ray.x1 - x3)) / denom
             if (ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1):
                 ray.x2 = ray.x1 + ua * (ray.x2 - ray.x1)
                 ray.y2 = ray.y1 + ua * (ray.y2 - ray.y1)
                 return None
                 
             x3 = self.center_xpos + self.size
-            denom = (y4 - self.center_ypos) * (ray.x2 - ray.x1) - (self.center_xpos - x3) * (ray.y2 - ray.y1)
+            denom = (y4 - self.center_ypos) * (ray.x2 - ray.x1) \
+                    - (self.center_xpos - x3) * (ray.y2 - ray.y1)
 
             if (denom == 0):
                 return None
 
-            ua = ((self.center_xpos - x3) * (ray.y1 - self.center_ypos) - (y4 - self.center_ypos) * (ray.x1 - x3)) / denom
-            ub = ((ray.x2 - ray.x1) * (ray.y1 - self.center_ypos) - (ray.y2 - ray.y1) * (ray.x1 - x3)) / denom
+            ua = ((self.center_xpos - x3) * (ray.y1 - self.center_ypos) \
+                - (y4 - self.center_ypos) * (ray.x1 - x3)) / denom
+            ub = ((ray.x2 - ray.x1) * (ray.y1 - self.center_ypos) \
+                - (ray.y2 - ray.y1) * (ray.x1 - x3)) / denom
             if (ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1):
                 ray.x2 = ray.x1 + ua * (ray.x2 - ray.x1)
                 ray.y2 = ray.y1 + ua * (ray.y2 - ray.y1)
@@ -151,7 +172,8 @@ class Line(VisualObject):
             return None
 
         ua = (x4 - x3) * (ray.y1 - self.center_ypos) / denom
-        ub = ((ray.x2 - ray.x1) * (ray.y1 - self.center_ypos) - (ray.y2 - ray.y1) * (ray.x1 - x3)) / denom
+        ub = ((ray.x2 - ray.x1) * (ray.y1 - self.center_ypos) \
+            - (ray.y2 - ray.y1) * (ray.x1 - x3)) / denom
 
         if (ua >= 0 and ua <= 1 and ub >= 0 and ub <= 1):
             ray.x2 = ray.x1 + ua * (ray.x2 - ray.x1)
