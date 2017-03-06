@@ -5,6 +5,8 @@ Contains the class for creating a simulation.
 
 import numpy as np
 import math
+import .sensor_agent
+import .visual_objects
 
 class RelationalCategorization:
 
@@ -54,8 +56,8 @@ class RelationalCategorization:
         'max_distance': 75,
         'max_ray_length': 220,
         'max_velocity': 5,
-        'circle_size': 20,
         'obj_velocity': 3.0,
+        'circle_size': 20,
         'circle_min_diameter': 20.0,
         'circle_max_diameter': 50.0,
         'circle_difference': 5.0,
@@ -65,7 +67,9 @@ class RelationalCategorization:
         'min_bias': -16.,
         'max_bias': 16.,
         'min_tau': 1.,
-        'max_tau': 30.
+        'max_tau': 30.,
+        'min_search_value': 0.0,
+        'max_search_value': 1.0
         }
 
         for key, default in parameter_defaults.iteritems():
@@ -76,13 +80,6 @@ class RelationalCategorization:
         self.initial_agent_y = self.world_bottom - self.agent_radius
         self.agent_top = self.initial_agent_y + self.agent_radius
         self.vertical_offset = self.agent_top - self.max_ray_length
-
-        # Hold these, might ditch them... not sure why they needed....
-        self.last_ray_index = self.num_rays - 1
-        self.last_int_index = self.num_interneurons - 1
-        self.left_motor_index = self.circuit_size - 2
-        self.right_motor_index = self.circuit_size - 1
-        # End trash
 
         if self.bilateral_symmetry:
             if self.num_rays % 2 == 0:
@@ -115,9 +112,88 @@ class RelationalCategorization:
                 + self.num_interneurons + 2 \
                 + self.num_interneurons + 2
 
-    def __call__():
+    def __call__(self, x):
 
+        # Generate agent
+        agent = sensor_agent.SensorAgent(self.agent_radius,
+            self.mass, self.visual_angle, self.num_rays,
+            self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
+            self.circuit_size, self.max_velocity)
 
+        # Generate circle
+        ball = visual_objects.Circle(self.circle_size,
+                                    self.initial_agent_x, self.world_top)
+
+        # Map parameter values
+        map_search_parameters(x, agent.nervous_system)
+
+        # Run trials
+
+        # Return fitness
+
+    def map_search_parameters(self, x, nervous_system):
+        """
+        x : numpy array of search parameter values
+        """
+
+        if self.bilateral_symmetry:
+
+            # Sensor Weights
+            rescale_parameter(x[:], self.min_weight,
+                self.max_weight, self.min_search_value,
+                self.max_search_value)
+
+            # Circuit weights
+
+            # Biases
+
+            # Time constants
+
+        else:
+
+            sensor_index_end = self.num_rays
+            circuit_index_end = self.num_rays + self.num_interneurons
+            bias_index_end = self.num_rays + 2 * self.num_interneurons
+
+            # Sensor Weights
+            nervous_system.sensor_weights = \
+                rescale_parameter(x[:sensor_index_end], 
+                self.min_weight,
+                self.max_weight, self.min_search_value,
+                self.max_search_value)
+
+            # Circuit weights
+            nervous_system.circuit_weights = \
+                rescale_parameter(x[sensor_index_end:circuit_index_end], 
+                self.min_weight,
+                self.max_weight, self.min_search_value,
+                self.max_search_value)
+
+            # Biases
+            nervous_system.biases = \
+                rescale_parameter(x[circuit_index_end:bias_index_end], 
+                self.min_bias,
+                self.max_bias, self.min_search_value,
+                self.max_search_value)
+
+            # Time constants
+            nervous_system.taus = rescale_parameter(x[bias_index_end:], 
+                self.min_tau,
+                self.max_tau, self.min_search_value,
+                self.max_search_value)
+
+    def run_trials(self, agent, ball):
+
+    def 
+
+def recale_parameter(parameter, min_param_value, max_param_value,
+    min_search_value, max_search_value):
+
+    scale = (max_param_value - min_param_value) \
+                / (max_search_value - min_search_value)
+    bias = min_param_value - scale * min_search_value
+
+    return scale * parameter + bias
 
 if __name__ == '__main__':
     """

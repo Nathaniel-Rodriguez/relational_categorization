@@ -24,9 +24,9 @@ class SensorCTRNN:
         self.ctrnn_states = np.zeros(self.circuit_size)
         self.ctrnn_outputs = np.zeros(self.circuit_size)
         self.biases = np.zeros(self.circuit_size)
-        self.gains = np.zeros(self.circuit_size)
-        self.taus = np.zeros(self.circuit_size)
-        self.rtaus = np.zeros(self.circuit_size)
+        self.gains = np.ones(self.circuit_size)
+        self.taus = np.ones(self.circuit_size)
+        self.rtaus = np.ones(self.circuit_size)
         self.sensor_states = np.zeros(self.circuit_size)
         self.circuit_weights = np.zeros((self.circuit_size, \
                                         self.circuit_size))
