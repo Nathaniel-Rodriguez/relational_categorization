@@ -51,6 +51,27 @@ class VisualObject:
         self.center_xpos += step_size * self.velocity_x
         self.center_ypos += step_size * self.velocity_y
 
+    def set_position(self, x, y):
+
+        self.center_xpos = x
+        self.center_ypos = y 
+
+    def set_positionx(self, x):
+
+        self.set_position(self, x, self.center_ypos)
+
+    def set_positiony(self, y):
+
+        self.set_position(self, self.center_xpos, y)
+
+    def set_size(self, size):
+
+        self.size = size
+
+    def leading_edge_y(self):
+
+        return self.center_ypos + self.size
+
 class Circle(VisualObject):
 
     def __init__(self, size, center_xpos, center_ypos):

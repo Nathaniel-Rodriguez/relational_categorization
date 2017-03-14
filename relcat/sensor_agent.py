@@ -124,9 +124,9 @@ class SensorAgent:
             right_force = 0.0
         else:
             left_force = self.nervous_system.neuron_output(\
-                                        self.nervous_system.circuit_size-1)
+                                        self.nervous_system.circuit_size-2)
             right_force = self.nervous_system.neuron_output(\
-                                        self.nervous_system.circuit_size)
+                                        self.nervous_system.circuit_size-1)
 
         # Update the agent's position
         self.velocity_x = (left_force - right_force) / self.mass

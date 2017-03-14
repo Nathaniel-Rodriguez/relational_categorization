@@ -30,7 +30,12 @@ class SensorCTRNN:
         self.sensor_states = np.zeros(self.circuit_size)
         self.circuit_weights = np.zeros((self.circuit_size, \
                                         self.circuit_size))
-        self.sensor_weights = np.zeros((self.circuit_size, \
+        # Note that sensor weights is larger than it should be
+        # This is because the original code didn't factor in
+        # the motor neurons. The weight matrix entries for the motor 
+        # neurons are initialized to 0.0 and just never updated
+        # during evolution
+        self.sensor_weights = np.zeros((self.num_of_sensors, \
                                         self.circuit_size))
 
     def randomize_state(self, random_variable_lower_bound=-1.0, \
@@ -44,7 +49,13 @@ class SensorCTRNN:
                         random_variable_upper_bound, size=self.circuit_size)
         self.ctrnn_outputs = \
                     sigmoid(self.gains * self.ctrnn_states + self.biases)
-        self.sensor_states = np.zeros(self.circuit_size)
+        self.sensor_states = np.zeros(self.num_of_sensors)
+
+    def initialize(self):
+
+        self.randomize_state(0.0, 0.0)
+        for i in range(self.num_of_sensors):
+            self.set_sensor(i, 0.0)
 
     def set_neuron_time_constants(self, time_constants):
 
@@ -57,7 +68,8 @@ class SensorCTRNN:
         This uses Beer's standard CTRNN equation.
         """
 
-        inputs = np.dot(self.sensor_weights, self.sensor_states)
+        inputs = np.dot(self.sensor_weights, self.sensor_states) \
+                    + np.dot(self.circuit_weights, self.ctrnn_outputs)
         self.ctrnn_states += step_size * self.rtaus * (inputs - self.ctrnn_states)
         self.ctrnn_outputs = sigmoid(self.gains * self.ctrnn_states + self.biases)
 
