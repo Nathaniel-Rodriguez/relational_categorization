@@ -5,8 +5,8 @@ Contains the class for creating a simulation.
 
 import numpy as np
 import math
-import .sensor_agent
-import .visual_objects
+from .sensor_agent import SensorAgent
+from .visual_objects import Circle
 
 class RelationalCategorization:
 
@@ -42,7 +42,7 @@ class RelationalCategorization:
         """
 
         # Default parameters
-        parameters = {
+        parameter_defaults = {
         'world_left': 0,
         'world_right': 400,
         'world_top': 0,
@@ -51,8 +51,8 @@ class RelationalCategorization:
         'agent_radius': 15,
         'mass': 0.2,
         'visual_angle': np.pi / 6,
-        'num_rays': 7,
-        'num_interneurons': 5,
+        'num_rays': 5,
+        'num_interneurons': 4,
         'max_distance': 75,
         'max_ray_length': 220,
         'max_velocity': 5,
@@ -72,7 +72,7 @@ class RelationalCategorization:
         'max_search_value': 1.0
         }
 
-        for key, default in parameter_defaults.iteritems():
+        for key, default in parameter_defaults.items():
             setattr(self, key, kwargs.get(key, default))
 
         self.circuit_size = self.num_interneurons + 2
@@ -80,30 +80,29 @@ class RelationalCategorization:
         self.initial_agent_y = self.world_bottom - self.agent_radius
         self.agent_top = self.initial_agent_y + self.agent_radius
         self.vertical_offset = self.agent_top - self.max_ray_length
-
         if self.bilateral_symmetry:
             if self.num_rays % 2 == 0:
                 self.num_sensor_weights = int(self.num_rays / 2
                                         * self.num_interneurons)
             else:
-                self.num_sensor_weights = (self.num_rays - 1) / 2 \
-                                * self.num_interneurons \
-                                + math.ceil(self.num_interneurons / 2)
+                self.num_sensor_weights = int((self.num_rays - 1) / 2 
+                                * self.num_interneurons 
+                                + math.ceil(self.num_interneurons / 2))
 
             num_motor_weights = self.num_interneurons
             num_loops = math.ceil(self.num_interneurons / 2)
-            num_cross_connections = int(math.ceil(self.num_interneurons / 2) \
-                                        * self.num_interneurons / 2)
+            num_cross_connections = (self.num_interneurons // 2)**2
             num_side_connections = math.ceil(self.num_interneurons / 2) \
                                 * (math.ceil(self.num_interneurons / 2) - 1)
             self.num_circuit_weights = num_motor_weights + num_loops \
                                     + num_cross_connections\
                                     + num_side_connections
-
-            self.num_parameters = num_sensor_weights \
-                                    + self.num_circuit_weights
+            self.num_parameters = self.num_sensor_weights \
+                                    + self.num_circuit_weights \
                                     + math.ceil(self.num_interneurons / 2) \
-                                    + math.ceil(self.num_interneurons / 2)
+                                    + math.ceil(self.num_interneurons / 2) \
+                                    + 2 # for motor neurons
+
         else:
             # sensor weights : num_interneurons * num_rays
             # circuit weights : num_interneurons * (num_interneurons + 2)
@@ -120,21 +119,24 @@ class RelationalCategorization:
     def __call__(self, x):
 
         # Generate agent
-        agent = sensor_agent.SensorAgent(self.agent_radius,
+        agent = SensorAgent(self.agent_radius,
             self.mass, self.visual_angle, self.num_rays,
             self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
             self.circuit_size, self.max_velocity)
 
         # Generate circle
-        ball = visual_objects.Circle(self.circle_size,
-                                    self.initial_agent_x, self.world_top)
+        ball = Circle(self.circle_size,
+                    self.initial_agent_x, self.world_top,
+                    0.0, self.obj_velocity)
 
         # Map parameter values
-        map_search_parameters(x, agent.nervous_system)
+        self.map_search_parameters(x, agent.nervous_system)
 
         # Run trials
+        fitness = self.run_trials(agent, ball)
 
-        # Return fitness
+        # Convert to cost
+        return 1. / fitness
 
     def map_search_parameters(self, x, nervous_system):
         """
@@ -159,16 +161,17 @@ class RelationalCategorization:
                 for j in range(self.num_interneurons):
                     nervous_system.sensor_weights[i,j] = \
                         sensor_weights[index_counter]
-                    nervous_system.sensor_weights[self.num_rays - i, 
-                        self.num_interneurons - j] = \
+                    nervous_system.sensor_weights[self.num_rays - i - 1, 
+                        self.num_interneurons - j - 1] = \
                         sensor_weights[index_counter]
                     index_counter += 1
+
             if self.num_rays % 2 == 1:
                 for j in range(math.ceil(self.num_interneurons / 2)):
-                    nervous_system.sensor_weights[math.ceil(self.num_rays 
+                    nervous_system.sensor_weights[int(self.num_rays 
                         / 2), j] = sensor_weights[index_counter]
-                    nervous_system.sensor_weights[math.ceil(self.num_rays 
-                        / 2), self.num_interneurons - j] \
+                    nervous_system.sensor_weights[int(self.num_rays 
+                        / 2), self.num_interneurons - j - 1] \
                                 = sensor_weights[index_counter]
                     index_counter += 1
 
@@ -186,18 +189,19 @@ class RelationalCategorization:
                 for j in range(self.num_interneurons):
                     nervous_system.circuit_weights[i,j] = \
                         circuit_weights[index_counter]
-                    nervous_system.circuit_weights[self.num_interneurons - i, \
-                        self.num_interneurons - j]
+                    nervous_system.circuit_weights[self.num_interneurons 
+                        - i - 1, self.num_interneurons - j - 1] = \
+                        circuit_weights[index_counter]
                     index_counter += 1
 
             if self.num_interneurons % 2 == 1:
                 for j in range(math.ceil(self.num_interneurons / 2)):
-                    nervous_system.sensor_weights[math.ceil(\
+                    nervous_system.circuit_weights[int(\
                         self.num_interneurons / 2), j] \
                         = circuit_weights[index_counter]
-                    nervous_system.sensor_weights[math.ceil(\
+                    nervous_system.circuit_weights[int(\
                         self.num_interneurons / 2), 
-                        self.num_interneurons - j] \
+                        self.num_interneurons - j - 1] \
                         = circuit_weights[index_counter]
                     index_counter += 1
 
@@ -206,36 +210,54 @@ class RelationalCategorization:
                     nervous_system.circuit_weights[i, 
                         self.num_interneurons + j] \
                         = circuit_weights[index_counter]
+                    nervous_system.circuit_weights[self.num_interneurons \
+                        - i - 1, self.circuit_size - j - 1] \
+                        = circuit_weights[index_counter]
                     index_counter += 1
 
+            if self.num_interneurons % 2 == 1:
+                for j in range(1):
+                    nervous_system.circuit_weights[int(\
+                        self.num_interneurons / 2), 
+                        self.num_interneurons + j] \
+                        = circuit_weights[index_counter]
+                    nervous_system.circuit_weights[int(\
+                        self.num_interneurons / 2), 
+                        self.circuit_size - j - 1] \
+                        = circuit_weights[index_counter]
+                    index_counter += 1                    
+
             # Biases
-            biases = \
+            bias_pars = \
                 rescale_parameter(x[circuit_index_end:bias_index_end], 
                 self.min_bias,
                 self.max_bias, self.min_search_value,
                 self.max_search_value)
+            biases = np.zeros(self.circuit_size)
             for i in range(math.ceil(self.num_interneurons / 2)):
-                nervous_system.biases[i] = biases[i]
-                nervous_system.biases[self.num_interneurons - i - 2] \
-                    = biases[i]
-
+                biases[i] = bias_pars[i]
+                biases[self.num_interneurons - i - 1] \
+                    = bias_pars[i]
             # Motor biases
-            nervous_system.biases[-2] = biases[-2]
-            nervous_system.biases[-1] = biases[-1]
+            biases[-2] = bias_pars[-1]
+            biases[-1] = bias_pars[-1]
+            nervous_system.set_biases(biases)
 
             # Time constants
-            time_constants = rescale_parameter(x[bias_index_end:], 
+            time_constant_pars = rescale_parameter(x[bias_index_end:], 
                 self.min_tau,
                 self.max_tau, self.min_search_value,
                 self.max_search_value)
+            time_constants = np.zeros(self.circuit_size)
             for i in range(math.ceil(self.num_interneurons / 2)):
-                nervous_system.taus[i] = time_constants[i]
-                nervous_system.biases[self.num_interneurons - i - 2] \
-                    = time_constants[i]
+                time_constants[i] = time_constant_pars[i]
+                time_constants[self.num_interneurons - i - 1] \
+                    = time_constant_pars[i]
 
             # Motor time constants
-            nervous_system.taus[-2] = time_constants[-2]
-            nervous_system.taus[-1] = time_constants[-1]
+            time_constants[-2] = time_constant_pars[-1]
+            time_constants[-1] = time_constant_pars[-1]
+            nervous_system.set_time_constants(time_constants)
 
         else:
 
@@ -252,7 +274,6 @@ class RelationalCategorization:
                 for j in range(self.num_interneurons):
                     nervous_system.sensor_weights[i,j] = \
                         sensor_weights[self.num_interneurons * i + j]
-                        
             # Circuit weights
             circuit_weights = rescale_parameter(\
                 x[sensor_index_end:circuit_index_end], 
@@ -272,17 +293,18 @@ class RelationalCategorization:
                                                 * self.num_interneurons
                                                 + 2 * i + j]
             # Biases
-            nervous_system.biases = \
+            nervous_system.set_biases(
                 rescale_parameter(x[circuit_index_end:bias_index_end], 
                 self.min_bias,
                 self.max_bias, self.min_search_value,
-                self.max_search_value)
+                self.max_search_value))
 
             # Time constants
-            nervous_system.taus = rescale_parameter(x[bias_index_end:], 
+            nervous_system.set_time_constants(
+                rescale_parameter(x[bias_index_end:], 
                 self.min_tau,
                 self.max_tau, self.min_search_value,
-                self.max_search_value)
+                self.max_search_value))
 
     def run_trials(self, agent, ball):
 
@@ -290,8 +312,8 @@ class RelationalCategorization:
                                         / self.circle_difference), 
                                 int(self.circle_max_diameter 
                                     / self.circle_difference)))
-        for i in result_matrix.shape[0]:
-            for j in result_matrix.shape[1]:
+        for i in range(result_matrix.shape[0]):
+            for j in range(result_matrix.shape[1]):
                 if i != j:
                     ball_size = i * self.circle_difference \
                                     + self.circle_min_diameter
@@ -342,7 +364,6 @@ class RelationalCategorization:
                 else normalized_distance
 
     def eval_fitness(self, fitness_matrix):
-
         col_avg = 0.0
         row_avg = 0.0
 
@@ -361,8 +382,8 @@ class RelationalCategorization:
                     num_sums = 0
                 else:
                     num_sums += 1
-                    col_sum += result_matrix[j,i]
-                    row_sum += result_matrix[i,j]
+                    col_sum += fitness_matrix[j,i]
+                    row_sum += fitness_matrix[i,j]
 
             col_avg += col_sum / num_sums
             row_avg += row_sum / num_sums
@@ -370,14 +391,14 @@ class RelationalCategorization:
         return min(col_avg / (fitness_matrix.shape[0] - 2) / 2, 
                     row_avg / (fitness_matrix.shape[0] - 2) / 2)
 
-def recale_parameter(parameter, min_param_value, max_param_value,
+def rescale_parameter(search_value, min_param_value, max_param_value,
     min_search_value, max_search_value):
 
     scale = (max_param_value - min_param_value) \
                 / (max_search_value - min_search_value)
     bias = min_param_value - scale * min_search_value
 
-    return scale * parameter + bias
+    return scale * search_value + bias
 
 if __name__ == '__main__':
     """

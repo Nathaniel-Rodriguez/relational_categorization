@@ -1,3 +1,8 @@
+"""
+Module for objects that will take part in the task.
+Python version of code written by RDB.
+"""
+
 import numpy as np
 import math
 
@@ -23,13 +28,14 @@ class VisualObject:
     Based class for the other objects
     """
 
-    def __init__(self, size, center_xpos, center_ypos):
+    def __init__(self, size, center_xpos, center_ypos,
+        velocity_x=0.0, velocity_y=0.0):
 
         self.size = size
         self.center_xpos = center_xpos
         self.center_ypos = center_ypos
-        self.velocity_x = 0.0
-        self.velocity_y = 0.0
+        self.velocity_x = velocity_x
+        self.velocity_y = velocity_y
 
     def clip_position(self, left, right, top, bottom):
 
@@ -72,10 +78,17 @@ class VisualObject:
 
         return self.center_ypos + self.size
 
+    def set_velocity(self, velocity_x, velocity_y):
+
+        self.velocity_x = velocity_x
+        self.velocity_y = velocity_y
+
 class Circle(VisualObject):
 
-    def __init__(self, size, center_xpos, center_ypos):
-        super().__init__(size, center_xpos, center_ypos)
+    def __init__(self, size, center_xpos, center_ypos,
+                velocity_x=0.0, velocity_y=0.0):
+        super().__init__(size, center_xpos, center_ypos,
+            velocity_x=velocity_x, velocity_y=velocity_y)
 
     def ray_intersection(self, ray):
         """
@@ -106,7 +119,6 @@ class Circle(VisualObject):
             (self.center_xpos * ray.x1 + self.center_ypos * ray.y1) \
             - self.size * self.size
         i = b * b - 4 * a * c
-
         if (i == 0):
             u = -b / (2 * a)
             if (u >= 0 and u <= 1):
@@ -138,8 +150,10 @@ class Circle(VisualObject):
 
 class Diamond(VisualObject):
 
-    def __init__(self, size, center_xpos, center_ypos):
-        super().__init__(size, center_xpos, center_ypos)
+    def __init__(self, size, center_xpos, center_ypos,
+            velocity_x=0.0, velocity_y=0.0):
+        super().__init__(size, center_xpos, center_ypos,
+            velocity_x=velocity_x, velocity_y=velocity_y)
 
     def ray_intersection(self, ray):
         """
@@ -204,3 +218,20 @@ class Line(VisualObject):
     def leading_edge(self):
 
         return self.center_ypos
+
+if __name__ == '__main__':
+    """
+    testing
+    """
+
+    # my_ray = Ray(x1=0, y1=15, x2=0, y2=1, angle=0, length=10,
+    #     init_relative_end_x=0, init_relative_end_y=0)
+    # my_obj = Circle(size=2, center_xpos=0, center_ypos=10)
+    # my_obj.clip_position(8,20,-10,0)
+    # print(my_obj.center_xpos, my_obj.center_ypos)
+    # print(my_obj.leading_edge())
+
+    # my_obj.ray_intersection(my_ray)
+    # print(my_ray.x1, my_ray.x2, my_ray.y1, my_ray.y2)
+
+    pass

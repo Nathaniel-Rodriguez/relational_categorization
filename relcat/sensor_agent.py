@@ -74,7 +74,7 @@ class SensorAgent:
             ray.x1 += x - self.xpos
             ray.y1 += y - self.ypos
 
-    def clip_position(self, left, right, top, bottom):
+    def clip_position(self, left, right):
 
         if (self.xpos - self.radius < left):
             dx = left - self.xpos + self.radius
@@ -92,7 +92,7 @@ class SensorAgent:
                 ray.x1 -= dx
                 ray.x2 -= dx
 
-    def initialize_ray_sensors(visual_obj, visual_obj2=None):
+    def initialize_ray_sensors(self, visual_obj, visual_obj2=None):
 
         # Reset the ray positions
         for ray in self.rays:
@@ -106,12 +106,12 @@ class SensorAgent:
                 visual_obj2.ray_intersection(ray)
             dx = ray.x2 - ray.x1
             dy = ray.y2 - ray.y1
-            rays.length = math.sqrt(dx * dx + dy * dy)
+            ray.length = math.sqrt(dx * dx + dy * dy)
 
-        # Update the visual sensors
+        # Update the visual sensors states (fraction of part cut off)
         for i, ray in enumerate(self.rays):
             self.nervous_system.set_sensor(i, 
-                (self.max_ray_length - ray.Length) / self.max_ray_length)
+                (self.max_ray_length - ray.length) / self.max_ray_length)
 
     def step(self, step_size, locked):
 
@@ -152,3 +152,10 @@ class SensorAgent:
 
         self.initialize_ray_sensors(visual_obj1, visual_obj2)
         self.step(step_size, locked)
+
+if __name__ == '__main__':
+    """
+    testing
+    """
+
+    pass
