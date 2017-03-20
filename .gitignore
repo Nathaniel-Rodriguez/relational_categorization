@@ -15,4 +15,4 @@
 test.py
 
 # Remove temp files
-/*.ipynb_checkpoints
+/.ipynb_checkpoints
