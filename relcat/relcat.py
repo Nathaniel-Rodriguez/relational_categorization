@@ -52,7 +52,7 @@ class RelationalCategorization:
         'mass': 0.2,
         'visual_angle': np.pi / 6,
         'num_rays': 7,
-        'num_interneurons': 5,
+        'num_interneurons': 3,
         'max_distance': 75,
         'max_ray_length': 220,
         'max_velocity': 5,
@@ -394,7 +394,8 @@ class RelationalCategorization:
         while (ball.leading_edge_y() < agent.ypos - agent.radius):
             ball.step(self.step_size)
             agent.one_obj_step(self.step_size, ball, False)
-
+            # keep ball within world
+            agent.clip_position(self.world_left, self.world_right)
             if record:
                 self._record_data(agent, ball, start=False)
 

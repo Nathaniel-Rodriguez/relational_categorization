@@ -66,13 +66,14 @@ class SensorAgent:
 
     def set_position(self, x, y):
 
-        self.xpos = x
-        self.ypos = y
-
         for ray in self.rays:
             ray.x2 += x - self.xpos
             ray.x1 += x - self.xpos
+            ray.y2 += y - self.ypos
             ray.y1 += y - self.ypos
+
+        self.xpos = x
+        self.ypos = y
 
     def clip_position(self, left, right):
 
