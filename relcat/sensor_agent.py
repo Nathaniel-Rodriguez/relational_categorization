@@ -47,9 +47,9 @@ class SensorAgent:
         self.nervous_system = SensorCTRNN(self.circuit_size, self.num_of_rays)
         self.rays = [ Ray() for i in range(self.num_of_rays) ]
 
-        self.reset()
+        self.reset_rays()
 
-    def reset(self):
+    def reset_rays(self):
 
         for i, theta in enumerate(np.linspace(-self.visual_angle/2.0, 
                                     self.visual_angle/2.0, self.num_of_rays)):

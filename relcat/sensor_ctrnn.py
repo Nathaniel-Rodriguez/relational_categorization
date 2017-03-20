@@ -13,9 +13,13 @@ class SensorCTRNN:
 
     """
 
-    def __init__(self, circuit_size, num_of_sensors):
+    def __init__(self, circuit_size, num_of_sensors,
+        bias_limit=16, gain_limit=1):
         """
         Initializes the CTRNN and its parameters to zero
+
+        The bias and gain limits are for determining the max
+        allowed state to prevent numerical instabilities and overflow.
         """
 
         self.circuit_size = circuit_size
@@ -37,6 +41,9 @@ class SensorCTRNN:
         # during evolution
         self.sensor_weights = np.zeros((self.num_of_sensors, \
                                         self.circuit_size))
+
+        # Overflow bounds
+        self.maxstate = (np.log(np.finfo(np.float64).max) - bias_limit) / gain_limit
 
     def randomize_state(self, random_variable_lower_bound=-1.0, \
             random_variable_upper_bound=1.0):
@@ -63,11 +70,12 @@ class SensorCTRNN:
         Steps the network's states and outputs using the Euler method.
         This uses Beer's standard CTRNN equation.
         """
-
+        
         inputs = np.dot(self.sensor_weights.T, self.sensor_states) \
                     + np.dot(self.circuit_weights.T, self.ctrnn_outputs)
         self.ctrnn_states += step_size * self.rtaus \
                             * (inputs - self.ctrnn_states)
+        np.clip(self.ctrnn_states, -self.maxstate, self.maxstate, out=self.ctrnn_states)
         self.ctrnn_outputs = sigmoid(self.gains 
                                         * self.ctrnn_states + self.biases)
 

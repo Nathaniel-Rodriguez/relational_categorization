@@ -1,5 +1,7 @@
 Implements the relational categorization task from (Williams, 2008) and (Williams, 2013)
-Uses Python 3.5.2+
+Uses Python 3.5.2+ (recommend using Anaconda)
+(optional) vpython 2
+(optional) jupyter notebook
 Requires CMA-ES library
 
 Williams, P. L., Beer, R. D., & Gasser, M. (2008). An Embodied Dynamical Approach to Relational Categorization. Proceedings of the 30th Annual Conference of the Cognitive Science Society, 1, 223–228.

@@ -47,12 +47,12 @@ class RelationalCategorization:
         'world_right': 400,
         'world_top': 0,
         'world_bottom': 300,
-        'bilateral_symmetry': True,
+        'bilateral_symmetry': False,
         'agent_radius': 15,
         'mass': 0.2,
         'visual_angle': np.pi / 6,
-        'num_rays': 5,
-        'num_interneurons': 4,
+        'num_rays': 7,
+        'num_interneurons': 5,
         'max_distance': 75,
         'max_ray_length': 220,
         'max_velocity': 5,
@@ -324,10 +324,43 @@ class RelationalCategorization:
 
         return self.eval_fitness(result_matrix)
 
-    def trial(self, agent, ball, presented_ball_size, comparison_ball_size):
+    def _record_data(self, agent, ball, start=True):
+
+        if start:
+            self.time_records = [0]
+            self.object_records = {}
+            self.object_records['ball'] = {'x': [ball.center_xpos],
+                                            'y': [ball.center_ypos],
+                                            'radius':[ball.size]}
+            self.object_records['agent'] = {'x': [agent.xpos], 
+                                            'y': [agent.ypos],
+                                            'radius': [agent.radius]}
+            for i, ray in enumerate(agent.rays):
+                self.object_records[i] = {'x1':[ray.x1], 
+                                        'y1':[ray.y1], 
+                                        'x2':[ray.y2], 
+                                        'y2':[ray.x2]}
+
+        else:
+
+            self.time_records.append(self.time_records[-1] + self.step_size)
+            self.object_records['ball']['x'].append(ball.center_xpos)
+            self.object_records['ball']['y'].append(ball.center_ypos)
+            self.object_records['ball']['radius'].append(ball.size)
+            self.object_records['agent']['x'].append(agent.xpos)
+            self.object_records['agent']['y'].append(agent.ypos)
+            self.object_records['agent']['radius'].append(agent.radius)
+            for i, ray in enumerate(agent.rays):
+                self.object_records[i]['x1'].append(ray.x1)
+                self.object_records[i]['y1'].append(ray.y1)
+                self.object_records[i]['x2'].append(ray.x2)
+                self.object_records[i]['y2'].append(ray.y2)
+
+    def trial(self, agent, ball, presented_ball_size, comparison_ball_size,
+        record=False):
 
         agent.set_position(self.initial_agent_x, self.initial_agent_y)
-        agent.reset()
+        agent.reset_rays()
         agent.nervous_system.initialize()
         agent.velocity_x = 0.0
 
@@ -338,21 +371,32 @@ class RelationalCategorization:
         ball.set_size(presented_ball_size / 2.0)
         agent.initialize_ray_sensors(ball)
 
+        # If recording create initial setup
+        if record:
+            self._record_data(agent, ball, start=True)
+
         # First drop presented ball, hold agent still
         while (ball.leading_edge_y() < agent.ypos - agent.radius):
             ball.step(self.step_size)
-            agent.step(self.step_size, True)
+            agent.one_obj_step(self.step_size, ball, True)
+
+            if record:
+                self._record_data(agent, ball, start=False)
 
         initial_object_y = self.initial_agent_y - (agent.radius 
                                                     + agent.max_ray_length
                                                     + comparison_ball_size)
         ball.set_position(self.initial_agent_x, initial_object_y)
         ball.set_size(comparison_ball_size / 2.0)
-        agent.reset()
+        agent.reset_rays()
+
         # Second drop comparison ball, let agent move
         while (ball.leading_edge_y() < agent.ypos - agent.radius):
             ball.step(self.step_size)
-            agent.step(self.step_size, False)
+            agent.one_obj_step(self.step_size, ball, False)
+
+            if record:
+                self._record_data(agent, ball, start=False)
 
         normalized_distance = abs(ball.center_xpos - agent.xpos) \
                                 / self.max_distance
@@ -364,9 +408,9 @@ class RelationalCategorization:
                 else normalized_distance
 
     def eval_fitness(self, fitness_matrix):
+
         col_avg = 0.0
         row_avg = 0.0
-
         for i in range(1, fitness_matrix.shape[0] - 1):
 
             col_sum = 0.0
@@ -390,6 +434,25 @@ class RelationalCategorization:
 
         return min(col_avg / (fitness_matrix.shape[0] - 2) / 2, 
                     row_avg / (fitness_matrix.shape[0] - 2) / 2)
+
+    def run_test_trial(self, x, ball_size, comparison_ball_size):
+
+        # Generate agent
+        agent = SensorAgent(self.agent_radius,
+            self.mass, self.visual_angle, self.num_rays,
+            self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
+            self.circuit_size, self.max_velocity)
+
+        # Generate circle
+        ball = Circle(self.circle_size,
+                    self.initial_agent_x, self.world_top,
+                    0.0, self.obj_velocity)
+
+        # Map parameter values
+        self.map_search_parameters(x, agent.nervous_system)
+
+        return self.trial(agent, ball, ball_size, 
+                                    comparison_ball_size, True)
 
 def rescale_parameter(search_value, min_param_value, max_param_value,
     min_search_value, max_search_value):
