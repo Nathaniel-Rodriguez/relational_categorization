@@ -13,3 +13,6 @@
 
 # Remove test file
 test.py
+
+# Remove temp files
+*.ipynb_checkpoints
