@@ -69,6 +69,7 @@ class SensorCTRNN:
         """
         Steps the network's states and outputs using the Euler method.
         This uses Beer's standard CTRNN equation.
+
         """
         
         inputs = np.dot(self.sensor_weights.T, self.sensor_states) \

@@ -16,3 +16,6 @@ test.py
 
 # Remove temp files
 /.ipynb_checkpoints
+
+# remove cache files
+/*__pycache__

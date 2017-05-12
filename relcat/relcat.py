@@ -152,7 +152,8 @@ class RelationalCategorization:
                                 + math.ceil(self.circuit_size / 2)
 
             # Sensor Weights
-            sensor_weights = rescale_parameter(x[:sensor_index_end], 
+            sensor_weights = rescale_parameter(periodic_boundary_conditions(
+                x[:sensor_index_end], 1), 
                 self.min_weight,
                 self.max_weight, self.min_search_value,
                 self.max_search_value)
@@ -178,8 +179,8 @@ class RelationalCategorization:
             # index_counter == sensor_index_end when over
 
             # Circuit weights
-            circuit_weights = rescale_parameter(\
-                x[sensor_index_end:circuit_index_end], 
+            circuit_weights = rescale_parameter(periodic_boundary_conditions(\
+                x[sensor_index_end:circuit_index_end],1), 
                 self.min_weight,
                 self.max_weight, self.min_search_value,
                 self.max_search_value)
@@ -229,7 +230,8 @@ class RelationalCategorization:
 
             # Biases
             bias_pars = \
-                rescale_parameter(x[circuit_index_end:bias_index_end], 
+                rescale_parameter(periodic_boundary_conditions(
+                    x[circuit_index_end:bias_index_end],1), 
                 self.min_bias,
                 self.max_bias, self.min_search_value,
                 self.max_search_value)
@@ -244,7 +246,8 @@ class RelationalCategorization:
             nervous_system.set_biases(biases)
 
             # Time constants
-            time_constant_pars = rescale_parameter(x[bias_index_end:], 
+            time_constant_pars = rescale_parameter(periodic_boundary_conditions(
+                x[bias_index_end:],1), 
                 self.min_tau,
                 self.max_tau, self.min_search_value,
                 self.max_search_value)
@@ -266,7 +269,8 @@ class RelationalCategorization:
             bias_index_end = circuit_index_end + self.circuit_size
 
             # Sensor Weights
-            sensor_weights = rescale_parameter(x[:sensor_index_end], 
+            sensor_weights = rescale_parameter(periodic_boundary_conditions(
+                x[:sensor_index_end],1), 
                         self.min_weight,
                         self.max_weight, self.min_search_value,
                         self.max_search_value)
@@ -275,8 +279,8 @@ class RelationalCategorization:
                     nervous_system.sensor_weights[i,j] = \
                         sensor_weights[self.num_interneurons * i + j]
             # Circuit weights
-            circuit_weights = rescale_parameter(\
-                x[sensor_index_end:circuit_index_end], 
+            circuit_weights = rescale_parameter(periodic_boundary_conditions(\
+                x[sensor_index_end:circuit_index_end],1), 
                 self.min_weight,
                 self.max_weight, self.min_search_value,
                 self.max_search_value)
@@ -294,14 +298,16 @@ class RelationalCategorization:
                                                 + 2 * i + j]
             # Biases
             nervous_system.set_biases(
-                rescale_parameter(x[circuit_index_end:bias_index_end], 
+                rescale_parameter(periodic_boundary_conditions(
+                    x[circuit_index_end:bias_index_end],1), 
                 self.min_bias,
                 self.max_bias, self.min_search_value,
                 self.max_search_value))
 
             # Time constants
             nervous_system.set_time_constants(
-                rescale_parameter(x[bias_index_end:], 
+                rescale_parameter(periodic_boundary_conditions(
+                    x[bias_index_end:],1), 
                 self.min_tau,
                 self.max_tau, self.min_search_value,
                 self.max_search_value))
@@ -463,6 +469,10 @@ def rescale_parameter(search_value, min_param_value, max_param_value,
     bias = min_param_value - scale * min_search_value
 
     return scale * search_value + bias
+
+def periodic_boundary_conditions(value, bound):
+
+    return bound - abs(value % (2 * bound) - bound)
 
 if __name__ == '__main__':
     """
