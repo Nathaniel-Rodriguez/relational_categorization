@@ -136,7 +136,7 @@ class RelationalCategorization:
         fitness = self.run_trials(agent, ball)
 
         # Convert to cost
-        return 1. / fitness
+        return -fitness
 
     def map_search_parameters(self, x, nervous_system):
         """
