@@ -465,7 +465,7 @@ class RelationalCategorization:
         agent = SensorAgent(self.agent_radius,
             self.mass, self.visual_angle, self.num_rays,
             self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
-            self.circuit_size, self.max_velocity)
+            self.circuit_size, self.max_velocity, noise_strength=self.noise_strength)
 
         # Generate circle
         ball = Circle(self.circle_size,
@@ -484,7 +484,7 @@ class RelationalCategorization:
         agent = SensorAgent(self.agent_radius,
             self.mass, self.visual_angle, self.num_rays,
             self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
-            self.circuit_size, self.max_velocity)
+            self.circuit_size, self.max_velocity, noise_strength=self.noise_strength)
 
         # Generate circle
         ball = Circle(self.circle_size,
@@ -512,7 +512,7 @@ class RelationalCategorization:
         agent = SensorAgent(self.agent_radius,
             self.mass, self.visual_angle, self.num_rays,
             self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
-            self.circuit_size, self.max_velocity)
+            self.circuit_size, self.max_velocity, noise_strength=self.noise_strength)
 
         # Generate circle
         ball = Circle(self.circle_size,
