@@ -28,7 +28,7 @@ class SensorAgent:
 
     def __init__(self, agent_radius, agent_mass, agent_visual_angle,
         num_of_rays, max_ray_length, agent_xpos, agent_ypos, circuit_size,
-        max_velocity):
+        max_velocity, noise_strength=0.0):
 
         self.radius = agent_radius
         self.mass = agent_mass
@@ -44,7 +44,8 @@ class SensorAgent:
         self.max_velocity = max_velocity
         self.velocity_x = 0.0
 
-        self.nervous_system = SensorCTRNN(self.circuit_size, self.num_of_rays)
+        self.nervous_system = SensorCTRNN(self.circuit_size, self.num_of_rays, 
+                                            noise_strength=noise_strength)
         self.rays = [ Ray() for i in range(self.num_of_rays) ]
 
         self.reset_rays()

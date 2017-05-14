@@ -14,7 +14,7 @@ class SensorCTRNN:
     """
 
     def __init__(self, circuit_size, num_of_sensors,
-        bias_limit=16, gain_limit=1):
+        bias_limit=16, gain_limit=1, noise_strength=0.0):
         """
         Initializes the CTRNN and its parameters to zero
 
@@ -24,6 +24,7 @@ class SensorCTRNN:
 
         self.circuit_size = circuit_size
         self.num_of_sensors = num_of_sensors
+        self.noise_strength = noise_strength
 
         self.ctrnn_states = np.zeros((self.circuit_size, 1))
         self.ctrnn_outputs = np.zeros((self.circuit_size, 1))
@@ -44,6 +45,12 @@ class SensorCTRNN:
 
         # Overflow bounds
         self.maxstate = (np.log(np.finfo(np.float64).max) - bias_limit) / gain_limit
+
+    def white_noise(self, step_size):
+
+        return np.sqrt(step_size * self.rtaus) \
+            * np.random.normal(loc=0.0, scale=1.0, size=(self.circuit_size,1)) \
+            * self.noise_strength
 
     def randomize_state(self, random_variable_lower_bound=-1.0, \
             random_variable_upper_bound=1.0):
@@ -75,7 +82,7 @@ class SensorCTRNN:
         inputs = np.dot(self.sensor_weights.T, self.sensor_states) \
                     + np.dot(self.circuit_weights.T, self.ctrnn_outputs)
         self.ctrnn_states += step_size * self.rtaus \
-                            * (inputs - self.ctrnn_states)
+                            * (inputs - self.ctrnn_states) + self.white_noise(step_size)
         np.clip(self.ctrnn_states, -self.maxstate, self.maxstate, out=self.ctrnn_states)
         self.ctrnn_outputs = sigmoid(self.gains 
                                         * self.ctrnn_states + self.biases)

@@ -69,7 +69,8 @@ class RelationalCategorization:
         'min_tau': 1.,
         'max_tau': 30.,
         'min_search_value': 0.0,
-        'max_search_value': 1.0
+        'max_search_value': 1.0,
+        'noise_strength': 0.0
         }
 
         for key, default in parameter_defaults.items():
@@ -122,7 +123,7 @@ class RelationalCategorization:
         agent = SensorAgent(self.agent_radius,
             self.mass, self.visual_angle, self.num_rays,
             self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
-            self.circuit_size, self.max_velocity)
+            self.circuit_size, self.max_velocity, noise_strength=self.noise_strength)
 
         # Generate circle
         ball = Circle(self.circle_size,
@@ -363,7 +364,7 @@ class RelationalCategorization:
                 self.object_records[i]['y2'].append(ray.y2)
 
     def trial(self, agent, ball, presented_ball_size, comparison_ball_size,
-        record=False):
+        record=False, validation=False):
 
         agent.set_position(self.initial_agent_x, self.initial_agent_y)
         agent.reset_rays()
@@ -405,14 +406,30 @@ class RelationalCategorization:
             if record:
                 self._record_data(agent, ball, start=False)
 
-        normalized_distance = abs(ball.center_xpos - agent.xpos) \
-                                / self.max_distance
-        normalized_distance = 1 if normalized_distance > 1 \
-                                else normalized_distance
+        if validation:
+            # Returns trial success whether it caught of avoided (0,1)
+            if presented_ball_size > comparison_ball_size:
+                if (ball.center_xpos - ball.size) > (agent.xpos + agent.radius) \
+                    or (ball.center_xpos + ball.size) < (agent.xpos - agent.radius):
+                    return 0, 0
+                else:
+                    return 1, 1
+            else:
+                if (ball.center_xpos - ball.size) > (agent.xpos + agent.radius) \
+                    or (ball.center_xpos + ball.size) < (agent.xpos - agent.radius):
+                    return 1, 0
+                else:
+                    return 0, 1
 
-        return 1 - normalized_distance \
-                if presented_ball_size > comparison_ball_size \
-                else normalized_distance
+        else:
+            # Use fitness
+            normalized_distance = abs(ball.center_xpos - agent.xpos) \
+                                    / self.max_distance
+            normalized_distance = 1 if normalized_distance > 1 \
+                                    else normalized_distance
+            return 1 - normalized_distance \
+                    if presented_ball_size > comparison_ball_size \
+                    else normalized_distance
 
     def eval_fitness(self, fitness_matrix):
 
@@ -460,6 +477,67 @@ class RelationalCategorization:
 
         return self.trial(agent, ball, ball_size, 
                                     comparison_ball_size, True)
+
+    def random_validation_run(self, x, num_pairs=1000):
+
+        # Generate agent
+        agent = SensorAgent(self.agent_radius,
+            self.mass, self.visual_angle, self.num_rays,
+            self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
+            self.circuit_size, self.max_velocity)
+
+        # Generate circle
+        ball = Circle(self.circle_size,
+                    self.initial_agent_x, self.world_top,
+                    0.0, self.obj_velocity)
+
+        self.map_search_parameters(x, agent.nervous_system)
+
+        original_set = np.random.uniform(self.circle_min_diameter, 
+            self.circle_max_diameter, size=num_pairs)
+        comparison_set = np.random.uniform(self.circle_min_diameter, 
+            self.circle_max_diameter, size=num_pairs)
+
+        total_performance = 0.0
+        for i in range(num_pairs):
+            success, catch = self.trial(agent, ball, original_set[i], 
+                comparison_set[i], validation=True)
+            total_performance += success
+
+        return total_performance / num_pairs
+
+    def ordered_validation_run(self, x, num_sizes=20, num_trials=1):
+
+        # Generate agent
+        agent = SensorAgent(self.agent_radius,
+            self.mass, self.visual_angle, self.num_rays,
+            self.max_ray_length, self.initial_agent_x, self.initial_agent_y,
+            self.circuit_size, self.max_velocity)
+
+        # Generate circle
+        ball = Circle(self.circle_size,
+                    self.initial_agent_x, self.world_top,
+                    0.0, self.obj_velocity)
+
+        self.map_search_parameters(x, agent.nervous_system)
+
+        original_set = np.linspace(self.circle_min_diameter, 
+                            self.circle_max_diameter, num_sizes)
+        comparison_set = np.linspace(self.circle_min_diameter, 
+                            self.circle_max_diameter, num_sizes)
+
+        comparison_results = np.zeros((num_sizes, num_sizes))
+        for i in range(num_sizes):
+            for j in range(num_sizes):
+                trial_catches = 0.0
+                for k in range(num_trials):
+                    success, catch = self.trial(agent, ball, original_set[i], 
+                        comparison_set[j], validation=True)
+                    trial_catches += catch
+
+                comparison_results[j,i] = trial_catches / num_trials
+
+        return comparison_results, original_set, comparison_set
 
 def rescale_parameter(search_value, min_param_value, max_param_value,
     min_search_value, max_search_value):
