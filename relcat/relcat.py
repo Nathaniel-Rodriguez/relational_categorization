@@ -535,7 +535,7 @@ class RelationalCategorization:
                         comparison_set[j], validation=True)
                     trial_catches += catch
 
-                comparison_results[j,i] = trial_catches / num_trials
+                comparison_results[j,i] = trial_catches / float(num_trials)
 
         return comparison_results, original_set, comparison_set
 
@@ -551,6 +551,60 @@ def rescale_parameter(search_value, min_param_value, max_param_value,
 def periodic_boundary_conditions(value, bound):
 
     return bound - abs(value % (2 * bound) - bound)
+
+def vpython_visualization(relcat_object, x, ball_size, comparison_ball_size):
+    """
+    Requires VPython to run
+    """
+    relcat_object.run_test_trial(x, ball_size, comparison_ball_size)
+
+    from vpython import *
+    scene.title = "Trial Simulation"
+    scene.center = vector(relcat_object.world_right/2, 
+                          relcat_object.world_bottom/2,0)
+    scene.background = color.black
+    scene.range = 175
+    box(pos=vector(relcat_object.world_right/2,
+                  relcat_object.world_bottom/2,0),
+       length=relcat_object.world_right,
+       height=relcat_object.world_bottom,
+       width=1,
+       color=color.white)
+    ball = sphere(pos=vector(relcat_object.object_records['ball']['x'][0],
+                      relcat_object.object_records['ball']['y'][0],0),
+                 radius=relcat_object.object_records['ball']['radius'][0],
+                 color=color.blue)
+    agent = sphere(pos=vector(relcat_object.object_records['agent']['x'][0],
+                      relcat_object.object_records['agent']['y'][0],0),
+                 radius=relcat_object.object_records['agent']['radius'][0],
+                 color=color.orange)
+    rays = []
+    for i in range(relcat_object.num_rays):
+        rays.append(arrow(pos=vector(relcat_object.object_records[i]['x1'][0],
+                              relcat_object.object_records[i]['y1'][0],0),
+                         axis=vector(relcat_object.object_records[i]['x2'][0] 
+                                     - relcat_object.object_records[i]['x1'][0],
+                                     relcat_object.object_records[i]['y2'][0]
+                                     - relcat_object.object_records[i]['y1'][0],0),
+                         color=color.cyan,
+                         shaftwidth=1))
+
+    while True:
+        for i in range(len(relcat_object.time_records)):
+            rate(150)
+            ball.pos.x = relcat_object.object_records['ball']['x'][i]
+            ball.pos.y = relcat_object.object_records['ball']['y'][i]
+            ball.radius = relcat_object.object_records['ball']['radius'][i]
+            agent.pos.x = relcat_object.object_records['agent']['x'][i]
+            agent.pos.y = relcat_object.object_records['agent']['y'][i]
+            agent.radius = relcat_object.object_records['agent']['radius'][i]
+            for j, ray in enumerate(rays):
+                ray.pos.x = relcat_object.object_records[j]['x1'][i]
+                ray.pos.y = relcat_object.object_records[j]['y1'][i]
+                ray.axis.x = relcat_object.object_records[j]['x2'][i] \
+                        - relcat_object.object_records[j]['x1'][i]
+                ray.axis.y = relcat_object.object_records[j]['y2'][i] \
+                        - relcat_object.object_records[j]['y1'][i]
 
 if __name__ == '__main__':
     """
