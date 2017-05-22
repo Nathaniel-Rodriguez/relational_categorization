@@ -5,6 +5,8 @@ Contains the class for creating a simulation.
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from .sensor_agent import SensorAgent
 from .visual_objects import Circle
 
@@ -552,41 +554,86 @@ def periodic_boundary_conditions(value, bound):
 
     return bound - abs(value % (2 * bound) - bound)
 
+def plot_catch_contour(first_circle_sizes, second_circle_sizes,
+    catch_fractions, levels="auto", prefix=""):
+
+    Z = catch_fractions
+    X, Y = np.meshgrid(first_circle_sizes, second_circle_sizes)
+
+    plt.clf()
+    if levels is "auto":
+        plt.contourf(X, Y, Z, cmap=cm.Greys)
+    else:
+        plt.contourf(X, Y, Z, cmap=cm.Greys, levels=levels)
+    cbar = plt.colorbar()
+    cbar.set_label("Catch ratio")
+    plt.xlabel("First circle size", fontsize=20)
+    plt.ylabel("Second circle size", fontsize=20)
+    plt.plot(plt.xlim(), plt.ylim(), ls="--", c=".3")
+    plt.tight_layout()
+    plt.savefig(prefix + '_catch_contour.png')
+    plt.clf()
+    plt.close()
+
+def noise_analysis(task, agent, noise_strengths, num_pairs=1000, prefix=''):
+
+    performances = []
+    for noise_std in noise_strengths:
+        task.noise_strength = noise_std
+        performances.append(task.random_validation_run(agent, num_pairs))
+
+    utilities.save_object((performances, noise_strengths), 
+        prefix + "_noise_analysis.dat")
+
+def plot_noise_analysis(performances, noise_strengths, prefix=''):
+
+    # plt.clf()
+    fig, ax = plt.subplots()
+    plt.plot(noise_strengths, performances)
+    plt.grid(True)
+    plt.minorticks_on()
+    plt.xlabel("$\epsilon$")
+    plt.ylabel("performance")
+    plt.tight_layout()
+    plt.savefig(prefix + "_noise_analysis.png", dpi=300)
+    plt.close()
+    plt.clf()
+
 def vpython_visualization(relcat_object, x, ball_size, comparison_ball_size):
     """
     Requires VPython to run
     """
     relcat_object.run_test_trial(x, ball_size, comparison_ball_size)
 
-    from vpython import *
-    scene.title = "Trial Simulation"
-    scene.center = vector(relcat_object.world_right/2, 
+    import vpython
+    vpython.scene.title = "Trial Simulation"
+    vpython.scene.center = vpython.vector(relcat_object.world_right/2, 
                           relcat_object.world_bottom/2,0)
-    scene.background = color.black
-    scene.range = 175
-    box(pos=vector(relcat_object.world_right/2,
+    vpython.scene.background = vpython.color.black
+    vpython.scene.range = 175
+    vpython.box(pos=vpython.vector(relcat_object.world_right/2,
                   relcat_object.world_bottom/2,0),
        length=relcat_object.world_right,
        height=relcat_object.world_bottom,
        width=1,
-       color=color.white)
-    ball = sphere(pos=vector(relcat_object.object_records['ball']['x'][0],
+       color=vpython.color.white)
+    ball = vpython.sphere(pos=vpython.vector(relcat_object.object_records['ball']['x'][0],
                       relcat_object.object_records['ball']['y'][0],0),
                  radius=relcat_object.object_records['ball']['radius'][0],
-                 color=color.blue)
-    agent = sphere(pos=vector(relcat_object.object_records['agent']['x'][0],
+                 color=vpython.color.blue)
+    agent = vpython.sphere(pos=vpython.vector(relcat_object.object_records['agent']['x'][0],
                       relcat_object.object_records['agent']['y'][0],0),
                  radius=relcat_object.object_records['agent']['radius'][0],
-                 color=color.orange)
+                 color=vpython.color.orange)
     rays = []
     for i in range(relcat_object.num_rays):
-        rays.append(arrow(pos=vector(relcat_object.object_records[i]['x1'][0],
+        rays.append(arrow(pos=vpython.vector(relcat_object.object_records[i]['x1'][0],
                               relcat_object.object_records[i]['y1'][0],0),
-                         axis=vector(relcat_object.object_records[i]['x2'][0] 
+                         axis=vpython.vector(relcat_object.object_records[i]['x2'][0] 
                                      - relcat_object.object_records[i]['x1'][0],
                                      relcat_object.object_records[i]['y2'][0]
                                      - relcat_object.object_records[i]['y1'][0],0),
-                         color=color.cyan,
+                         color=vpython.color.cyan,
                          shaftwidth=1))
 
     while True:
